@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">TestCar</string>
+
+    <string name="hint_brand">Производитель...</string>
+    <string name="hint_model">Марка...</string>
+    <string name="hint_price">Цена...</string>
+    <string name="button_save">Save</string>
+    <string name="empty_not_saved">Word not saved because it is empty.</string>
+
+<string-array name="brands">
+    <item>Выберете производителя...</item>
+    <item>BMW</item>
+    <item>Audi</item>
+    <item>Lada</item>
+</string-array>
+</resources>
