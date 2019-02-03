@@ -13,8 +13,9 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
-import android.view.Menu
-import android.view.MenuItem
+import android.util.Log
+import android.view.*
+import android.widget.AdapterView
 import android.widget.Toast
 import com.example.dda.testcar.room.Car
 import kotlinx.android.synthetic.main.app_bar_layout.*
@@ -47,12 +48,44 @@ class MainActivity : AppCompatActivity() {
         adapter = CarAdapter(this)
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.addOnItemTouchListener(
+            RecyclerViewTouchListener(
+                this,
+                recyclerView,
+                object : RecyclerViewTouchListener.ClickListener {
+                    override fun onClick(view: View, position: Int) {
+                        val intent = Intent(this@MainActivity, AddEditCarActivity::class.java)
+                        intent.putExtra("id", adapter.getCarAt(position).id)
+                        intent.putExtra("brand", adapter.getCarAt(position).brand)
+                        intent.putExtra("model", adapter.getCarAt(position).model)
+                        intent.putExtra("price", adapter.getCarAt(position).price)
+                        startActivityForResult(intent, EDIT_CAR_REQUEST)
+                    }
+
+                    override fun onLongClick(view: View?, position: Int) {
+
+                        val myBuilder = AlertDialog.Builder(this@MainActivity, R.style.myDialog)
+                        myBuilder
+                            .setTitle("Удаление авто")
+                            .setMessage("Вы действительно хотите удалить это авто?")
+                            .setPositiveButton("Delete") { _, _ ->
+                                carViewModel.delete(adapter.getCarAt(position))
+                            }
+                            .setNegativeButton("Cancel") { dialog, _ ->
+                                dialog.cancel()
+                            }
+                        val myDialog = myBuilder.create()
+                        myDialog.show()
+                    }
+                })
+        )
 
         carViewModel = ViewModelProviders.of(this).get(CarViewModel::class.java)
         carViewModel.allCars.observe(this, Observer { cars ->
             cars?.let { adapter.setCars(it) }
         })
 
+        // этот метод работает не на всех устройствах.
         initSwipe()
     }
 
@@ -131,11 +164,10 @@ class MainActivity : AppCompatActivity() {
 
     //вызываем диалоги для выбора фильтрации по производителю или модели
     private fun showAlert(brandOrModel: String) {
-        val array: Array<String>
-        if (brandOrModel == "brand") {
-            array = arrayOf("BMW", "Audi", "Lada")
+        val array: Array<String> = if (brandOrModel == "brand") {
+            arrayOf("BMW", "Audi", "Lada")
         } else {
-            array = arrayOf(
+            arrayOf(
                 "bmw1", "bmw2", "bmw3", "bmw4",
                 "audi1", "audi2", "audi3", "audi4",
                 "lada1", "lada2", "lada3", "lada4"
@@ -166,8 +198,10 @@ class MainActivity : AppCompatActivity() {
         val simpleItemTouchCallback =
             object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
 
-                override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
-                    target: RecyclerView.ViewHolder): Boolean {
+                override fun onMove(
+                    recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
                     return false
                 }
 
@@ -196,7 +230,6 @@ class MainActivity : AppCompatActivity() {
                     actionState: Int,
                     isCurrentlyActive: Boolean
                 ) {
-
                     val icon: Bitmap
                     if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
 
